@@ -1,0 +1,52 @@
+<!--
+	MoeWah — a NetNewsWire article theme.
+
+	NetNewsWire's injected JavaScript looks for `div.articleBody` — with the tag
+	name, not just the class. wrapTables, flattenPreElements and sizeTailwindSVGs
+	all query `div.articleBody …`, so an <article> here silently costs the theme
+	its table wrapper, its <td><pre> unwrapping and its Tailwind SVG sizing.
+	Every bundled theme uses a div for the same reason; do not change the tag.
+
+	Template variables used here (see the bundled Promenade theme for the
+	full list): title, preferred_link, body, byline, feed_link,
+	feed_link_title, avatar_src, date_medium, time_short, external_link,
+	external_link_label, external_link_stripped, dateline_style,
+	text_size_class.
+
+	The ids/classes NetNewsWire's injected JavaScript depends on are kept
+	as-is: #nnwImageIcon, #bodyContainer, .nnw-overflow, .nnw-constrained,
+	.iframeWrap, .systemMessage, and the newsfoot footnote popovers.
+-->
+<script type="text/javascript">
+	document.addEventListener("DOMContentLoaded", function () {
+		// Hide the source footer when the article has no external link.
+		var externalLink = "[[external_link_stripped]]";
+		if (externalLink === "") {
+			var footer = document.getElementById("nnwFooter");
+			if (footer) footer.style.display = "none";
+		}
+	});
+</script>
+
+<div class="fontSize [[text_size_class]]">
+	<header class="record">
+		<img class="avatar nnw-nozoom" id="nnwImageIcon" src="[[avatar_src]]" alt="" />
+		<div class="attribution">
+			<a class="feedlink" href="[[feed_link]]">[[feed_link_title]]</a>
+			<div class="byline">[[byline]]</div>
+		</div>
+		<a class="nnwDateTime" href="[[preferred_link]]">
+			<span class="nnwDate">[[date_medium]]</span>
+			<span class="nnwTime">[[time_short]]</span>
+		</a>
+	</header>
+
+	<h1 class="articleTitle"><a href="[[preferred_link]]">[[title]]</a></h1>
+
+	<div id="bodyContainer" class="articleBody">[[body]]</div>
+
+	<footer id="nnwFooter" class="footer">
+		<span class="footerLabel">[[external_link_label]]</span>
+		<a href="[[external_link]]">[[external_link_stripped]]</a>
+	</footer>
+</div>

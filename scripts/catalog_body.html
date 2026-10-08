@@ -1,0 +1,297 @@
+<!--
+	Preview fixture: the style catalogue.
+
+	Every selector src/stylesheet.css declares gets a live demo here, grouped by
+	kind, so a gap is visible as an undemoed rule rather than as a surprise in
+	the reader. `scripts/check_theme_styles.swift` loads the built theme the way
+	NetNewsWire does and cross-checks this page: it fails if a declared selector
+	has no demo here, if a rule was dropped by WebKit's parser, or if a
+	computed-style assertion does not hold.
+
+	Not part of the theme bundle — build.sh never copies this. The `.spec-*`
+	annotation classes are styled from the preview shell, not from the theme, so
+	the theme's own CSS stays exactly what ships.
+-->
+
+<!-- 封面图：正文里的第一个元素，而且是裸 <img>（没有 figure 包裹） -->
+<img src="__IMAGE__" alt="cover image" />
+
+<p class="spec-note">
+	最上面那张图是<strong>裸 <code>&lt;img&gt;</code>，并且是正文的第一个元素</strong>：用来验证封面图与正文之间的间距
+	（<code>img:not(.emoji):not(.twemoji):not(.wp-smiley) { margin: 1.6em auto }</code>），
+	以及 <code>.articleBody &gt; :first-child { margin-top: 0 }</code> 有没有把它的上边距收掉。<br />
+	本文档逐条列出主题声明过的排版样式。每块上方标出选择器，<strong>有样式的</strong>都在这页上真实渲染；
+	末尾「主题未接管」一节列出留给 NetNewsWire 自身 core.css 的标签。深浅两色请切系统外观。
+</p>
+
+<hr />
+
+<!-- ───────────────────────────────────────────────────────────── 段落与内联 -->
+<h2>1 · 段落与内联</h2>
+
+<p class="spec-line"><code>.articleBody p</code> — margin 0 0 1.15em，正文色 --soft</p>
+<p>这是一个正文段落。字形骨架由系统的 Avenir Next 与内嵌的 IBM Plex Sans SC 承担，行高 1.75，颜色是比标题低一档的 --soft。段落之间靠 1.15em 的下边距分开。</p>
+<p>第二段，用来确认段间距。</p>
+
+<p class="spec-line"><code>strong</code> <code>b</code> · <code>em</code> · <code>del</code> <code>s</code> · <code>mark</code></p>
+<p>这里的 <strong>strong 是 600 字重</strong>，这里的 <b>b 标签</b> 与它同款（主题把两个一起接管），<em>em 只提亮到 --ink</em>，<del>del 是删除线</del>、<s>s 也是</s>，<mark>mark 保留墨色并压一条 accent 底线</mark>。</p>
+
+<p class="spec-line"><code>code</code> <code>kbd</code> <code>samp</code> · <code>.articleBody code</code></p>
+<p>行内代码 <code>--measure</code> 有 1px hairline 边框和 --panel 底；键盘键位 <kbd>⌘K</kbd> 只取墨色不加底；<samp>samp 走等宽</samp>。注意只有 <code>.articleBody code</code> 有底色，<code>kbd</code> 和 <code>samp</code> 只继承等宽。</p>
+
+<p class="spec-line"><code>.articleBody a</code> <code>:link</code> <code>:visited</code> <code>:hover</code></p>
+<p>正文链接长得像<a href="https://moewah.com/">这样一条 accent 色的发丝线</a>，悬停时下划线由 hairline 变实。<code>:visited</code> 在 WebKit 里不可染色、<code>:hover</code> 静止截不到，这两个状态请在浏览器里手动试。</p>
+
+<p class="spec-line"><code>sup</code> <code>sub</code> — vertical-align + position: relative 微调</p>
+<p>上标<sup>[1]</sup>与下标<sub>n</sub>各抬／压 0.2em，这是主题自己定的，不是浏览器默认值。</p>
+
+<p class="spec-line"><code>.newsfoot-footnote-popover + a.footnote</code> 系列 — 脚注芯片</p>
+<p class="spec-line">注意：这个类<strong>不是主题写的</strong>，是 main.js 的 <code>styleLocalFootnotes()</code> 给 <code>sup &gt; a[href*='#fn']</code> 加的。所以下面的实物必须写成真实的脚注结构，否则不会命中。</p>
+<p>脚注标记是反色芯片而不是正文：<sup id="fnref1"><a href="#fn1" id="fn-chip-js">1</a></sup> 这就是 <code>body a.footnote</code>。它旁边的悬停／高亮态由 <code>a.footnote:hover</code> 和 <code>.newsfoot-footnote-popover + a.footnote</code> 负责——后者需要 NetNewsWire 的新脚注 JS 在 DOM 里插入 popover 才能命中。</p>
+<p class="spec-line">popover 紧邻脚注时会走 <code>.newsfoot-footnote-popover + a.footnote</code>（相邻兄弟选择器，必须是紧挨着的两个元素）</p>
+<div class="newsfoot-footnote-popover" style="position: static; display: inline-block; vertical-align: top; margin-top: 4px;"><div class="newsfoot-footnote-popover-inner" style="padding: 6px 8px; font-size: 0.85em;">紧邻的 popover 与脚注</div></div><a class="footnote" href="#fn2" id="fn-chip-adjacent">2</a>
+
+<div class="newsfoot-footnote-popover" style="position: static; display: inline-block; vertical-align: top; margin-top: 4px;">
+	<div class="newsfoot-footnote-popover-arrow" style="width: 10px; height: 10px; margin: 2px auto;"></div>
+	<div class="newsfoot-footnote-popover-inner" style="padding: 8px 10px; font-size: 0.85em;">popover 的三件套：外层 <code>-popover</code>、小三角 <code>-arrow</code>、内容 <code>-inner</code>。主题只负责给它们上色与描边，位置由 NetNewsWire 的脚本算。</div>
+</div>
+
+<p>独立芯片（不紧邻 popover，手写 class）：<a class="footnote" href="#fn3" id="fn-chip-plain">3</a></p>
+
+<p class="spec-line">脚注本体：main.js 还会隐藏 <code>.footnote-return / .footnoteBackLink / .reversefootnote</code>（core.css 负责）</p>
+<ol id="fns">
+	<li id="fn1">这是脚注正文 <a class="footnote-return" href="#fnref1">↩</a></li>
+</ol>
+
+<p class="spec-line"><code>字体</code> — 拉丁走系统 Avenir Next（不内嵌）；300 显示为 Ultra Light，400 Regular，500 Medium，600 Demi Bold · 中文是内嵌的 IBM Plex Sans SC 300/400/600 · 元数据、代码与图注是内嵌的 Ioskeley Mono 400/500/600</p>
+<p>中文那三档是三个真字面，不是渲染器合成：文章标题 300、正文 400、<strong>加粗 600</strong>。表头与 h6 请求的 500 在中文里按 CSS 字重匹配落到 600（这个面没有 500），所以中文表头比拉丁表头略重一档。</p>
+
+<!-- ───────────────────────────────────────────────────────────── 标题 -->
+<h2>2 · 标题层级</h2>
+
+<p class="spec-line"><code>.articleBody h1</code> — 1.4em / 300</p>
+<h1>一级标题 h1</h1>
+
+<p class="spec-line"><code>.articleBody h2</code> — 1.2em / 500</p>
+<h2>二级标题 h2</h2>
+
+<p class="spec-line"><code>.articleBody h3</code> — 1.05em / 500</p>
+<h3>三级标题 h3</h3>
+
+<p class="spec-line"><code>.articleBody h4 h5 h6</code> — 1em，且换到等宽（--font-mono），字距 0.08em</p>
+<h4>四级标题 h4</h4>
+<h5>五级标题 h5</h5>
+<h6>六级标题 h6</h6>
+
+<p class="spec-line"><code>.articleTitle</code>（模板里的文章大标题）— 1.65em / 300；链接三态齐全</p>
+<p>文章大标题不在正文里，它由 <code>template.html</code> 渲染，见本页顶部——那一行的悬停色由 <code>.articleTitle a:hover</code> 负责。</p>
+
+<!-- ───────────────────────────────────────────────────────────── 列表 -->
+<h2>3 · 列表</h2>
+
+<p class="spec-line"><code>ul</code> <code>ol</code> <code>li</code> — padding-inline-start 1.5em；li 下边距 0.35em</p>
+<ul>
+	<li>无序列表第一项</li>
+	<li>第二项，稍微长一点，用来看换行后的悬挂缩进是否对齐</li>
+	<li>第三项 —— 破折号与全角标点：，。！？；「引号」《书名》</li>
+</ul>
+<ol>
+	<li>有序列表第一项</li>
+	<li>第二项
+		<ul>
+			<li>嵌套一层（主题没有为嵌套单独写规则，靠继承）</li>
+			<li>嵌套第二项</li>
+		</ul>
+	</li>
+	<li>第三项</li>
+</ol>
+
+<!-- ───────────────────────────────────────────────────────────── 引用与分隔 -->
+<h2>4 · 引用与分隔</h2>
+
+<p class="spec-line"><code>blockquote</code> — accent 左竖线 2px，正文色；<code>blockquote p:last-child</code> 收掉末段下边距</p>
+<blockquote>
+	<p>档案不是拿来装饰的，它记录判断——为什么这么定，当时看到了什么。</p>
+	<p>第二段用来验证 <code>blockquote p:last-child</code> 的 margin-bottom 归零，否则引用块底部会多出一段空隙。</p>
+</blockquote>
+
+<p class="spec-line"><code>hr</code> — 1px --hair 上边线，上下 2em</p>
+<hr />
+
+<!-- ───────────────────────────────────────────────────────────── 代码块 -->
+<h2>5 · 代码块</h2>
+
+<p class="spec-line"><code>.articleBody pre</code> — --panel 底、1px hairline、0.85em、行高 1.55；<code>overflow-x: auto</code> 但 <code>overflow-y: hidden</code></p>
+<pre><code>const theme = "MoeWah";
+console.log(`loaded: ${theme}`);</code></pre>
+
+<p class="spec-line">同一块：长行应该横向滚动而不换行（<code>word-wrap: normal</code> + <code>word-break: normal</code> + <code>-webkit-hyphens: none</code>）</p>
+<pre><code>curl -H "Authorization: Bearer $TOKEN" "https://api.example.com/v1/articles?feed=moewah&amp;limit=50&amp;since=2026-01-01T00:00:00Z"</code></pre>
+
+<p class="spec-line"><code>.articleBody pre code</code> — 取消内层的内边距／底色／边框，字号继承外层</p>
+<p>上一块代码里的 <code>&lt;code&gt;</code> 就是这条规则在管：没有二次内边距，也没有双层底色。中英混排的代码注释也一样：<code>// 这里的注释走中文字体</code></p>
+
+<!-- ───────────────────────────────────────────────────────────── 媒体 -->
+<h2>6 · 媒体与嵌入</h2>
+
+<p class="spec-line"><code>figure</code> <code>img</code> <code>figcaption</code> — 图片自适应宽度、居中；图注走等宽 faint</p>
+<figure>
+	<img src="__IMAGE__" alt="sample figure" />
+	<figcaption>FIG. 01 — 图注走 --font-mono、0.72em、--faint。</figcaption>
+</figure>
+
+<p class="spec-line"><code>img</code> <code>div</code> <code>video</code> <code>object</code> 共用的四条 max-width 规则</p>
+<p>主题对 <code>img/figure/video/div/object</code> 统一施加 max-width: 100% 与 <code>height: auto !important</code>，<code>margin: 0 auto</code> 居中。下面是 <code>video</code>（无源，只显示 poster）与 <code>object</code> 的实物：</p>
+<video controls poster="__IMAGE__" style="width: 100%;"></video>
+<object type="image/svg+xml" data="__IMAGE__" aria-label="object 演示" style="width: 100%; display: block;"></object>
+
+<p class="spec-line"><code>img.emoji</code> 与 core.css 的 <code>height: 1em !important</code>：与主题的 <code>img { height: auto !important }</code> 同为 !important，靠特异性 core 胜出</p>
+<p>行内 emoji：<img class="emoji" src="__IMAGE__" alt="🙂" /> 与 twemoji：<img class="twemoji" src="__IMAGE__" alt="📰" /> —— 都应该被压到 1em 高、且<strong>不带图片外边距</strong>，而不是铺满整列。</p>
+
+<p class="spec-line">main.js 会把 <code>img.wp-smiley[alt]</code> 换成 alt 文本，把带 Tailwind 尺寸类的 <code>svg</code> 直接写上 width/height（不然内联 SVG 会铺满整列）</p>
+<p>表情图（应变成文字）：<img class="wp-smiley" src="__IMAGE__" alt="📰" /> 图标：<svg class="w-[22px] h-[22px]" viewBox="0 0 22 22" width="100%"><circle cx="11" cy="11" r="9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></p>
+
+<p class="spec-line"><code>.iframeWrap</code> + <code>iframe</code> — 16:9 比例容器（padding-top 56.25%）</p>
+<div class="iframeWrap">
+	<iframe srcdoc="<body style='margin:0;display:grid;place-items:center;height:100%;font:12px ui-monospace,monospace'>iframe · .iframeWrap · 16:9</body>"></iframe>
+</div>
+
+<p class="spec-line">固定高宽的 iframe（写的是 width/height 属性）：main.js 会改成 <code>aspect-ratio</code> + <code>height: auto</code>，否则 max-width 会把高度压成不变形的大空盒</p>
+<iframe width="560" height="315" srcdoc="<body style='margin:0;display:grid;place-items:center;height:100%;font:12px ui-monospace,monospace'>iframe width=560 height=315</body>"></iframe>
+
+<p class="spec-line"><code>iframe.nnw-constrained</code> — 限高 50vw，由 NetNewsWire 的脚本给视频嵌入加类</p>
+<iframe class="nnw-constrained" style="width: 100%; height: 180px" srcdoc="<body style='margin:0;display:grid;place-items:center;height:100%;font:12px ui-monospace,monospace'>iframe.nnw-constrained</body>"></iframe>
+
+<!-- ───────────────────────────────────────────────────────────── 表格 -->
+<h2>7 · 表格</h2>
+
+<p class="spec-line"><code>.nnw-overflow</code>（横向滚动容器，NN 的脚本会加）+ <code>table</code> <code>td</code> <code>th</code></p>
+<p class="spec-line">末列／末行的边框由 <code>:matches(td, th):last-child</code> 与 <code>:matches(thead, tbody, tfoot):last-child &gt; tr:last-child</code> 收掉 —— 这两条最容易被浏览器丢掉语法</p>
+<div class="nnw-overflow">
+	<table>
+		<thead>
+			<tr><th>Token</th><th>角色</th><th>值</th></tr>
+		</thead>
+		<tbody>
+			<tr><td>--ink</td><td>主文字</td><td>#1d1f21</td></tr>
+			<tr><td>--soft</td><td>正文</td><td>#5c6165</td></tr>
+			<tr><td>--accent</td><td>全站唯一强调色</td><td>#2e4fa3</td></tr>
+		</tbody>
+	</table>
+</div>
+
+<p class="spec-line"><code>.nnw-overflow table table</code> — 嵌套表格去掉外框、不被拉满；<code>.nnw-overflow .nnw-overflow</code> — 嵌套 wrapper 不加第二层间距。
+下面的嵌套表格手动套了 wrapper，就是为了复现 app 里 JavaScript 包裹嵌套表格之后的 DOM 形状。</p>
+<div class="nnw-overflow">
+	<table>
+		<tr><td>外层单元格</td><td>
+			<div class="nnw-overflow"><table><tr><td>嵌套表</td><td>无外框、不拉满</td></tr></table></div>
+		</td></tr>
+		<tr><td>代码在单元格里</td><td><pre><span><code>td pre</code></span> 里套了 span，main.js 会把它拆掉</pre></td></tr>
+	</table>
+</div>
+
+<p class="spec-line"><code>.nnw-overflow table[border="0"]</code> — 老式 <code>&lt;table border="0"&gt;</code> 去边框</p>
+<div class="nnw-overflow">
+	<table border="0">
+		<tr><td>border="0"</td><td>只留内层 hairline</td></tr>
+	</table>
+</div>
+
+<p class="spec-line"><code>.feedbin--article-wrap</code> — Feedbin 式文章的顶部 hairline 分隔</p>
+<div class="feedbin--article-wrap"><p>这个 div 上方应该有一条 hairline，用来分隔续接的文章块。</p></div>
+
+<!-- ───────────────────────────────────────────────────────────── 系统消息 -->
+<h2>8 · 系统消息</h2>
+
+<p class="spec-line"><code>.systemMessage</code> — 绝对居中、--faint、不可选中（NN 在无正文时显示）</p>
+<div style="position: relative; height: 140px; border: 1px dashed var(--hair);">
+	<div class="systemMessage">systemMessage</div>
+</div>
+
+<!-- ───────────────────────────────────────────────────────────── 字号档位 -->
+<h2>9 · 字号档位</h2>
+
+<p class="spec-line">macOS 五档：<code>.smallText</code> 14px · <code>.mediumText</code> 16px · <code>.largeText</code> 18px ·
+<code>.xlargeText</code> 20px · <code>.xxlargeText</code> 22px</p>
+<p class="spec-line"><strong>注意拼法</strong>：app 替换进模板的类名来自 <code>ArticleTextSize.cssClass</code>，它返回的是
+<code>xLargeText</code> / <code>xxLargeText</code>（<strong>大写 L</strong>），而 app 自己的默认样式表和官方主题都写
+<code>.xlargeText</code> / <code>.xxlargeText</code>。CSS 类名大小写敏感，两边不一致时两个最大档位就是死的 ——
+所以主题把两种拼法都写了。下面七行分别验证。</p>
+<p class="smallText">smallText 14px —— 档位最小的一档。</p>
+<p class="mediumText">mediumText 16px —— 默认档位。</p>
+<p class="largeText">largeText 18px —— 预览页当前用的就是这一档（<code>[[text_size_class]]</code>）。</p>
+<p class="xLargeText">xLargeText 20px —— app 实际替换进来的拼法。</p>
+<p class="xxLargeText">xxLargeText 22px —— app 实际替换进来的拼法，最大档位。</p>
+<p class="xlargeText">xlargeText 20px —— 官方主题与 app 自带样式表的拼法（主题兼容保留）。</p>
+<p class="xxlargeText">xxlargeText 22px —— 同上。</p>
+
+<p class="spec-line"><code>.fontSize</code> + <code>[[font-size]]</code> — iOS 专用：字号由模板变量注入，不是这五个类</p>
+<p>iOS 分支（<code>@supports (-webkit-touch-callout: none)</code>）另外给 body 加了 4px 20px 28px 的内边距、<code>word-break: break-word</code>、<code>-webkit-hyphens: auto</code>、<code>-webkit-text-size-adjust: none</code>。<strong>这些在 macOS 预览里看不到</strong>，只能在真机或 iOS 模拟器确认。<code>[[text_size_class]]</code> 只在 macOS 被替换（app 源码里包在 <code>#if os(macOS)</code>），iOS 用的是 <code>[[font-size]]</code>。</p>
+
+<!-- ───────────────────────────────────────────────────────────── 未接管 -->
+<h2>10 · 主题未接管的部分</h2>
+
+<p class="spec-line">这一节不是手写的，来自 <code>scripts/check_theme_styles.swift</code> 的实际加载结果：NetNewsWire 会把
+<code>core.css</code> 插在主题之前，所以下面这些样式由 <strong>NetNewsWire 自己</strong> 提供，主题一个字都没写。</p>
+
+<h3>10.1 core.css 负责、主题不管（有意留白）</h3>
+<p class="spec-line"><code>html { scrollbar-gutter: stable }</code> · <code>.articleBody { position: relative }</code>（主题的 <code>.systemMessage</code> 绝对定位就靠它当锚点）</p>
+<p class="spec-line">广告与分享垃圾一律 <code>display: none !important</code>：<code>iframe[src*="feedads"]</code> <code>iframe[src*="doubleclick"]</code> <code>a[href*=".ads."]</code> <code>img[src*="feedburner"]</code> <code>.social_items</code> <code>.mcnFollowBlock</code> <code>.x-netnewswire-hide</code> 等约 20 条</p>
+<p class="spec-line">表情尺寸：<code>img.emoji</code> <code>img.twemoji</code> <code>.twemoji</code> <code>.twemoji svg</code> <code>.wp-smiley</code> —— 主题的 <code>img { height: auto !important }</code> 与 core 的 <code>img.emoji { height: 1em !important }</code> 同为 !important，靠特异性 core 胜出（下面有一段 emoji 实物与断言）</p>
+<p class="spec-line">脚注结构：<code>.newsfoot-footnote-container</code>（定位上下文）· <code>.newsfoot-footnote-popover .footnote-return / .footnoteBackLink / .reversefootnote</code>（隐藏返回链接）· <code>.newsfoot-footnote-popover-inner :first-child/:last-child</code>（收边距）</p>
+<p class="spec-line">iOS 图片缩放时的转圈：<code>.activityIndicatorWrap</code> <code>.activityIndicator</code> —— 只给几何，没给颜色，在主题纸面上未必协调（真机才看得到）</p>
+
+<h3>10.2 core.css 给了结构、主题必须显式推翻的地方（已补齐）</h3>
+<p class="spec-line">core.css 对脚注是<strong>结构 + 造型一起给</strong>的：芯片是 <code>border-radius: 1em</code> 的药丸、自带 <code>top: -0.1em</code> 抬升，popover 与内层分别有 <code>0.3em</code> / <code>calc(0.3em - 1px)</code> 圆角。主题早先只接管了颜色、底色与描边，漏了<strong>圆角</strong>与 <code>sup</code> 的位移复位 —— 于是在一个声明「无圆角」的主题里，脚注芯片是药丸形、popover 描边顺着圆角弯、芯片还被 <code>.articleBody sup</code> 二次抬高。</p>
+<p class="spec-line">现在 <code>sup[id^='fn']</code> 显式复位到 <code>vertical-align: baseline; bottom: 0</code>，三处圆角显式写 <code>border-radius: 0</code>。检查器里有 4 条断言在守：脚注芯片方角、popover 方角、内层方角、以及 <code>sup</code> 复位。</p>
+<p class="spec-line">教训归档：<strong>接管一个 core.css 已经造型过的元素时，「改色」不等于「接管」</strong> —— 没显式推翻的属性会继续用 core 的值。</p>
+
+<h3>10.3 谁都没管、走浏览器默认</h3>
+<p>下面这些标签在 <code>core.css</code> 和主题里<strong>都没有规则</strong>：</p>
+<dl>
+	<dt>dt / dd</dt>
+	<dd>定义列表（部分技术博客会用）</dd>
+</dl>
+<p>引用标签 <q>q 会由浏览器自动加引号</q>、<cite>cite 是斜体</cite>、<time>time</time>、<small>small</small>、<u>u</u>、<ins>ins</ins>、<abbr title="HyperText Markup Language">abbr</abbr>（带 title 有虚线下划线）。</p>
+<details><summary>details / summary（可折叠块）</summary><p>展开后的内容同样没有样式。</p></details>
+<p>媒体与图形：<code>audio</code>、<code>picture/source</code>、<code>svg</code>、<code>canvas</code> —— 主题只给了 <code>img/video/object</code> 宽度约束。</p>
+<p>表单控件：<code>input</code> <code>button</code> <code>select</code> <code>textarea</code> <code>label</code>。<input value="input" size="6" /> <button type="button">button</button></p>
+
+<h3>10.4 看不出来的部分（本页无能力验证）</h3>
+<p class="spec-line">iOS 分支：<code>@supports (-webkit-touch-callout: none)</code> 里的 <code>[[font-size]]</code>、<code>-webkit-hyphens</code>、<code>-webkit-text-size-adjust</code>、body 内边距 —— 只能在真机／模拟器确认。</p>
+<p class="spec-line">脚注 popover 的位置：由 NetNewsWire 的 JS 计算，本页是静态摆放的实物。</p>
+<p class="spec-line"><code>:visited</code>：WebKit 出于隐私不暴露，主题写了但静态页面无法呈现。</p>
+
+<!-- ───────────────────────────────────────────────────────────── 间距体检 -->
+<h2>11 · 间距体检</h2>
+
+<p class="spec-line">下面每两块之间的<strong>实测像素间距</strong>由 <code>check_theme_styles.swift</code> 用 <code>getBoundingClientRect</code> 量 ——
+外边距会折叠，声明值 1.15em/1.4em/1.6em 不等于实际间隔，所以这里量的是真值。</p>
+
+<p id="sp-a">段落 A —— 用来量它到下一个块的间距。</p>
+<pre id="sp-pre"><code>pre —— 代码块</code></pre>
+<p id="sp-b">段落 B</p>
+<blockquote id="sp-quote"><p>引用块</p></blockquote>
+<p id="sp-c">段落 C</p>
+<figure id="sp-figure">
+	<img src="__IMAGE__" alt="spacing figure" />
+	<figcaption>figure 内图注（图与图注之间应该是 0.5em，不是图片那 1.6em）</figcaption>
+</figure>
+<p id="sp-d">段落 D</p>
+<div class="nnw-overflow" id="sp-table-wrap">
+	<table id="sp-table">
+		<tr><td>表格</td><td>两列短内容</td></tr>
+	</table>
+</div>
+<p id="sp-e">段落 E —— 上面这张表只有两列短内容，应该依然铺满整列宽度。</p>
+<ul id="sp-list">
+	<li>列表项</li>
+</ul>
+<p id="sp-f">段落 F</p>
+<p class="spec-line">另一个易漏点：固定高宽的 iframe 不会被 app 包进 <code>.iframeWrap</code>，所以它自己必须带外边距</p>
+<iframe id="sp-iframe" width="560" height="315" srcdoc="<body style='margin:0'></body>"></iframe>
+<p id="sp-g">段落 G</p>
+
+<p class="spec-line">另外两条不属于样式的「必须保留」，删了会让 NetNewsWire 的脚本失效：</p>
+<p><code>#bodyContainer</code>（正文容器）· <code>#nnwImageIcon</code>（feed 图标）· <code>.nnw-overflow</code> · <code>.nnw-constrained</code> · <code>.iframeWrap</code> · <code>.systemMessage</code> · <code>.newsfoot-*</code> · <code>.fontSize</code> —— 本页顶部的记录头与底部的源页脚就是模板渲染出来的实物。</p>

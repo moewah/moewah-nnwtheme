@@ -1,0 +1,76 @@
+name: build
+
+# This workflow builds the theme and publishes it — that is the whole job. The
+# rendering checks live in scripts/ and are run locally before tagging, because
+# they need NetNewsWire installed and a graphical session (see the README).
+# Nothing here installs an app or renders anything.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the theme
+        run: |
+          set -euo pipefail
+          ./build.sh --zip
+          # The build verifies every font hash itself; this only confirms the zip
+          # holds the bundle rather than an empty folder.
+          unzip -l dist/MoeWah.nnwtheme.zip | grep -q "MoeWah.nnwtheme/stylesheet.css"
+          unzip -l dist/MoeWah.nnwtheme.zip | grep -q "MoeWah.nnwtheme/Info.plist"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MoeWah.nnwtheme
+          path: dist/MoeWah.nnwtheme.zip
+          if-no-files-found: error
+
+  release:
+    name: publish
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: MoeWah.nnwtheme
+          path: dist
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          ls -la dist
+          asset="dist/MoeWah.nnwtheme.zip"
+          url="https://github.com/$REPO/releases/download/$TAG/MoeWah.nnwtheme.zip"
+          latest="https://github.com/$REPO/releases/latest/download/MoeWah.nnwtheme.zip"
+          cat > notes.md <<EOF
+          NetNewsWire 文章主题。下载后直接安装，包内随附字体许可文本。
+
+          iOS：用 NetNewsWire 打开下面的链接即可安装（也可以把 zip 放进「文件」后在应用内添加）：
+
+          netnewswire://theme/add?url=$url
+
+          macOS：解压后双击 MoeWah.nnwtheme，或在应用的设置里把 Article Theme 选成 MoeWah。
+
+          固定指向最新版的地址，适合长期引用：
+
+          $latest
+          EOF
+          gh release create "$TAG" "$asset" --repo "$REPO" \
+            --title "MoeWah $TAG" --notes-file notes.md

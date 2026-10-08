@@ -1,0 +1,733 @@
+/* ============================================================================
+   MoeWah — a NetNewsWire article theme
+
+   The design tokens mirror the MoeWah site (src/styles/global.css): archive
+   paper, hairline rules, mono metadata, no rounded corners, no shadows.
+   Shared rules come first; the platform-specific blocks are at the bottom,
+   gated with @supports (macOS reports no -webkit-touch-callout, iOS does).
+
+   NetNewsWire prepends its own core.css to this file, so :root tokens and
+   base rules are free to override it. Do not drop the selectors its
+   JavaScript depends on: #bodyContainer, #nnwImageIcon, .nnw-overflow,
+   .nnw-constrained, .iframeWrap, .systemMessage, .newsfoot-*.
+
+   Type sizes are written in em on purpose. The reader's text-size setting
+   lands on the .fontSize wrapper (macOS class, iOS [[font-size]]), and rem
+   resolves against html — always 16px — so rem-based headings and metadata
+   would ignore the setting and flatten against the body text. --measure is
+   the one deliberate rem: it is a column width, not type.
+   ============================================================================ */
+
+/* ---- Tokens (light) ---- */
+:root {
+	--bg: #efefeb;
+	--panel: #f9f9f6;
+	--ink: #1d1f21;
+	--soft: #5c6165;
+	--faint: #979da2;
+	--accent: #2e4fa3;
+	--line: rgba(29, 31, 33, 0.8);
+	--hair: rgba(29, 31, 33, 0.14);
+
+	/* Latin text is left to the system: NetNewsWire is Apple-only, so Avenir Next
+	   is already on the device and no bytes are embedded for it. The theme asks
+	   for 300/400/500/600 and that family has no Light, so 300 lands on Ultra
+	   Light (measured), so the title is lighter than a typical 300 would be.
+	   Nothing here is redistributed: the face is only referenced by name, on
+	   hardware Apple ships it for.
+
+	   'IBM Plex Sans SC' is the embedded CJK face (see fonts/vendored-fonts.css).
+	   It is listed after the Latin family because it claims the CJK ranges only —
+	   Latin, digits and ASCII punctuation never reach it. PingFang SC sits behind
+	   it for the characters this face has no drawing for. */
+	--font-sans: 'Avenir Next', 'IBM Plex Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+	/* Display type is the only thing that asks for 300, and Avenir Next has no
+	   Light — a 300 request there lands on Ultra Light, whose strokes carry less
+	   than half the ink of the Chinese face's 300 (measured at 22px: 2.31% vs
+	   5.49%), which reads as hairline English next to solid Chinese. So display
+	   type takes its Latin from the older Avenir family, whose Light is a real
+	   300 (4.32% — a ratio of 0.79 against the Chinese, versus 0.42 for Ultra
+	   Light). Only family names are involved; nothing is embedded. */
+	--font-display: 'Avenir', 'Avenir Next', 'IBM Plex Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+	--font-mono: 'Ioskeley Mono', ui-monospace, 'SF Mono', Menlo, 'IBM Plex Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace;
+	/* font-synthesis-style is deliberately left at its default. Chinese has no
+	   italic face anywhere, so an <em> that mixes scripts would otherwise render
+	   half italic (Latin, a real face) and half upright (Chinese) inside one
+	   phrase — the fake slant is what keeps it uniform. Text inside code,
+	   figcaption and th is the other way round: 400/500 italics are embedded
+	   there, so those get a real face instead of a sheared upright. */
+
+	--measure: 40rem;	/* rem on purpose: column width, must not scale with type */
+	--tracking-head: 0.04em;
+	--tracking-mono: 0.08em;
+}
+
+/* ---- Tokens (dark) — follows the system, not a manual switch ---- */
+@media screen and (prefers-color-scheme: dark) {
+	:root {
+		--bg: #15171a;
+		--panel: #1c1f23;
+		--ink: #e7e8e5;
+		--soft: #a3a9ad;
+		--faint: #666c71;
+		--accent: #8fa8e8;
+		--line: rgba(231, 232, 229, 0.75);
+		--hair: rgba(231, 232, 229, 0.14);
+	}
+}
+
+/* ============================================================================
+   Base
+   ============================================================================ */
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	max-width: var(--measure);
+	margin-left: auto;
+	margin-right: auto;
+	background-color: var(--bg);
+	color: var(--ink);
+	font-family: var(--font-sans);
+	font-size: 16px;
+	line-height: 1.75;
+	font-weight: 400;
+	word-wrap: break-word;
+	-webkit-font-smoothing: antialiased;
+}
+
+/* Paper grain. The site's signature texture, kept faint so it never fights
+   the text. Remove this block for a perfectly flat page. */
+body::after {
+	content: '';
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: 2147483647;
+	opacity: 0.3;
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.22 0 0 0 0 0.25 0 0 0 0.04 0'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>");
+}
+
+strong,
+b {
+	color: var(--ink);
+	font-weight: 600;
+}
+
+em {
+	color: var(--ink);
+}
+
+.systemMessage {
+	position: absolute;
+	top: 45%;
+	left: 50%;
+	transform: translateX(-55%) translateY(-50%);
+	-webkit-user-select: none;
+	cursor: default;
+	color: var(--faint);
+}
+
+/* ============================================================================
+   Record header — feed, byline and date as archive metadata
+   ============================================================================ */
+
+.record {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding-bottom: 14px;
+	border-bottom: 1px solid var(--line);
+}
+
+.avatar {
+	flex: 0 0 auto;
+	width: 34px;
+	height: 34px;
+	min-width: 34px;
+	object-fit: cover;
+	/* Archive keeps its square corners. */
+	border: 1px solid var(--hair);
+}
+
+.attribution {
+	flex: 1 1 auto;
+	min-width: 0;
+	font-family: var(--font-mono);
+	font-size: 0.72em;
+	line-height: 1.45;
+	letter-spacing: var(--tracking-mono);
+}
+
+.feedlink,
+.feedlink:link,
+.feedlink:visited {
+	color: var(--ink);
+	text-decoration: none;
+	text-transform: uppercase;
+	letter-spacing: 0.14em;
+}
+
+.feedlink:hover {
+	color: var(--accent);
+}
+
+.byline {
+	color: var(--faint);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.byline a,
+.byline a:link,
+.byline a:visited {
+	color: var(--faint);
+	text-decoration: none;
+}
+
+.nnwDateTime,
+.nnwDateTime:link,
+.nnwDateTime:visited {
+	flex: 0 0 auto;
+	text-align: end;
+	font-family: var(--font-mono);
+	font-size: 0.68em;
+	line-height: 1.45;
+	letter-spacing: var(--tracking-mono);
+	color: var(--faint);
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.nnwDate,
+.nnwTime {
+	display: block;
+}
+
+.nnwTime {
+	letter-spacing: 0.14em;
+}
+
+/* ============================================================================
+   Title
+   ============================================================================ */
+
+.articleTitle {
+	margin: 26px 0 0;
+	font-size: 1.65em;
+	font-family: var(--font-display);
+	font-weight: 300;
+	line-height: 1.28;
+	letter-spacing: var(--tracking-head);
+	color: var(--ink);
+}
+
+.articleTitle a,
+.articleTitle a:link,
+.articleTitle a:visited {
+	color: var(--ink);
+	text-decoration: none;
+}
+
+.articleTitle a:hover {
+	color: var(--accent);
+}
+
+/* ============================================================================
+   Article body
+   ============================================================================ */
+
+.articleBody {
+	/* Prose sits one tier below the page: --soft body, --ink for anything that
+	   has to carry emphasis. Mirrors the site's .markdown-body. */
+	margin-top: 22px;
+	color: var(--soft);
+}
+
+.articleBody p {
+	margin: 0 0 1.15em;
+}
+
+/* The body's own top/bottom padding is the frame here — a first child's margin
+   would pile on top of it and a last child's would push the footer away. */
+.articleBody > :first-child {
+	margin-top: 0;
+}
+
+.articleBody > :last-child {
+	margin-bottom: 0;
+}
+
+/* ---- Links: accent text, hairline underline that firms up on hover ----
+   text-decoration rather than border-bottom: a border on an inline box lands
+   on the descent line, where it cuts through every g / y / p / j / q, and it
+   takes no offset. Both properties need Safari 12.1+, well under the app's floor. */
+.articleBody a,
+.articleBody a:link,
+.articleBody a:visited {
+	color: var(--accent);
+	text-decoration: underline;
+	text-decoration-thickness: 1px;
+	text-decoration-color: var(--hair);
+	text-underline-offset: 0.3em;
+	transition: text-decoration-color 200ms ease-out;
+}
+
+.articleBody a:hover {
+	text-decoration-color: var(--accent);
+}
+
+/* ---- Headings ---- */
+.articleBody h1,
+.articleBody h2,
+.articleBody h3,
+.articleBody h4,
+.articleBody h5,
+.articleBody h6 {
+	margin: 1.9em 0 0.6em;
+	color: var(--ink);
+	font-weight: 500;
+	line-height: 1.32;
+	letter-spacing: 0.02em;
+}
+
+.articleBody h1 {
+	font-size: 1.4em;
+	font-family: var(--font-display);
+	font-weight: 300;
+}
+
+.articleBody h2 {
+	font-size: 1.2em;
+}
+
+.articleBody h3 {
+	font-size: 1.05em;
+}
+
+.articleBody h4,
+.articleBody h5,
+.articleBody h6 {
+	font-size: 1em;
+	font-family: var(--font-mono);
+	letter-spacing: var(--tracking-mono);
+}
+
+/* ---- Rules ---- */
+hr {
+	border: none;
+	border-top: 1px solid var(--hair);
+	margin: 2em 0;
+}
+
+/* ---- Quotes ---- */
+blockquote {
+	margin: 1.4em 0;
+	padding: 0.1em 0 0.1em 16px;
+	border-inline-start: 2px solid var(--accent);
+	color: var(--soft);
+}
+
+blockquote p:last-child {
+	margin-bottom: 0;
+}
+
+/* ---- Lists ---- */
+ul,
+ol {
+	margin: 0 0 1.15em;
+	padding-inline-start: 1.5em;
+}
+
+li {
+	margin-bottom: 0.35em;
+}
+
+/* ---- Inline marks: struck text recedes, a highlight keeps ink ---- */
+del,
+s {
+	color: var(--faint);
+	text-decoration-thickness: 1px;
+}
+
+mark {
+	color: var(--ink);
+	background: var(--panel);
+	border-bottom: 1px solid var(--accent);
+}
+
+/* ---- Code ---- */
+code,
+pre,
+kbd,
+samp {
+	font-family: var(--font-mono);
+}
+
+kbd {
+	color: var(--ink);
+}
+
+.articleBody code {
+	padding: 0.1em 0.35em;
+	font-size: 0.88em;
+	background: var(--panel);
+	border: 1px solid var(--hair);
+}
+
+.articleBody pre {
+	/* Code blocks sit a tier above prose, as on the site: shiki renders its pre
+	   with --astro-code-foreground, which maps to --ink. */
+	margin: 1.4em 0;
+	padding: 12px 14px;
+	background: var(--panel);
+	border: 1px solid var(--hair);
+	font-size: 0.85em;
+	line-height: 1.55;
+	color: var(--ink);
+	overflow: auto;
+	overflow-y: hidden;
+	word-wrap: normal;
+	word-break: normal;
+	-webkit-hyphens: none;
+}
+
+.articleBody pre code {
+	padding: 0;
+	background: none;
+	border: none;
+	font-size: inherit;
+	letter-spacing: -0.01em;
+}
+
+/* ---- Media ----
+/* The base constraint for every replaced element and layout box. Vertical
+   margins are deliberately 0 here and added back per element below: this rule
+   also hits the wrappers NetNewsWire's JavaScript injects (.nnw-overflow,
+   .iframeWrap) and inline glyph images, where a block margin would be wrong. */
+img,
+figure,
+video,
+div,
+object {
+	max-width: 100%;
+	height: auto !important;
+	margin: 0 auto;
+}
+
+/* A bare <img> — a cover image, an illustration dropped between two paragraphs —
+   sits in a line box, so a vertical margin is the only thing separating it from
+   the prose. Scoped to .articleBody so the record header's .avatar keeps its
+   own geometry, and kept as plain `.articleBody img` so that the resets below
+   can out-specify it (a `:not()` chain would win over them instead). */
+.articleBody img {
+	margin: 1.6em auto;
+}
+
+/* core.css treats emoji, twemoji and smileys as inline glyphs: a vertical margin
+   there would push every line that contains one. */
+.articleBody img.emoji,
+.articleBody img.twemoji,
+.articleBody img.wp-smiley {
+	margin: 0;
+}
+
+figure {
+	margin: 1.6em 0;
+}
+
+/* The figure already carries the block spacing, and the caption carries its own
+   gap — an image margin inside would add to both. */
+.articleBody figure img {
+	margin: 0 auto;
+}
+
+figcaption {
+	margin-top: 0.5em;
+	font-family: var(--font-mono);
+	font-size: 0.72em;
+	line-height: 1.5;
+	letter-spacing: 0.02em;
+	color: var(--faint);
+}
+
+/* Standalone embeds: a fixed-size iframe is never wrapped by the app's
+   JavaScript (it gets an aspect-ratio instead), so it needs the margin here. */
+iframe {
+	max-width: 100%;
+	margin: 1.6em auto;
+}
+
+/* Inside the wrapper the wrapper owns the spacing, and the frame is absolutely
+   positioned to fill it — a margin would offset it out of the 16:9 box. */
+.iframeWrap iframe {
+	margin: 0;
+}
+
+.iframeWrap {
+	position: relative;
+	display: block;
+	padding-top: 56.25%;
+	margin: 1.6em 0;
+}
+
+iframe.nnw-constrained {
+	max-height: 50vw;
+}
+
+.iframeWrap iframe {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100% !important;
+	width: 100% !important;
+}
+
+sup {
+	vertical-align: top;
+	position: relative;
+	bottom: 0.2em;
+}
+
+sub {
+	vertical-align: bottom;
+	position: relative;
+	top: 0.2em;
+}
+
+/* ---- Tables: hairline grid, no fill ---- */
+/* Spacing lives on the wrapper, not the table: the wrapper is what the app's
+   JavaScript injects around every table, and it is also the scroll container.
+   The nested rule matters because that script wraps nested tables too. */
+.nnw-overflow {
+	overflow-x: auto;
+	margin: 1.6em 0;
+}
+
+.nnw-overflow .nnw-overflow {
+	margin: 0;
+}
+
+.nnw-overflow table {
+	/* A table's default width is shrink-to-fit, which leaves short tables
+	   floating in the middle of the column instead of filling it. */
+	width: 100%;
+	margin-bottom: 1px;
+	border-spacing: 0;
+	border: 1px solid var(--line);
+	font-size: inherit;
+}
+
+.nnw-overflow table table {
+	width: auto;
+	margin-bottom: 0;
+	border: none;
+}
+
+.nnw-overflow td,
+.nnw-overflow th {
+	padding: 6px 9px;
+	border: 1px solid var(--hair);
+	border-top: none;
+	border-left: none;
+	-webkit-hyphens: none;
+	word-break: normal;
+}
+
+.nnw-overflow th {
+	font-family: var(--font-mono);
+	font-size: 0.85em;
+	font-weight: 500;
+	letter-spacing: 0.04em;
+	color: var(--faint);
+}
+
+.nnw-overflow tr :matches(td, th):last-child {
+	border-right: none;
+}
+
+.nnw-overflow :matches(thead, tbody, tfoot):last-child > tr:last-child :matches(td, th) {
+	border-bottom: none;
+}
+
+.nnw-overflow td pre {
+	border: none;
+	padding: 0;
+}
+
+.nnw-overflow table[border="0"] {
+	border-width: 0;
+}
+
+/* ---- Feed-specific leftovers ---- */
+.feedbin--article-wrap {
+	border-top: 1px solid var(--hair);
+}
+
+/* ============================================================================
+   Source footer
+   ============================================================================ */
+
+.footer {
+	margin-top: 34px;
+	padding-top: 12px;
+	border-top: 1px solid var(--hair);
+	font-family: var(--font-mono);
+	font-size: 0.72em;
+	line-height: 1.6;
+	letter-spacing: 0.04em;
+	color: var(--faint);
+	word-break: break-all;
+}
+
+.footerLabel {
+	margin-right: 0.6em;
+	color: var(--faint);
+}
+
+.footer a,
+.footer a:link,
+.footer a:visited {
+	color: var(--accent);
+	text-decoration: none;
+}
+
+.footer a:hover {
+	text-decoration: underline;
+}
+
+/* ============================================================================
+   Newsfoot footnote popovers (theme in both appearances)
+
+   core.css gives these structural styling this theme has to overrule, not just
+   paint over: the chip is a pill (`border-radius: 1em`) and carries its own
+   superscript lift (`top: -0.1em`), and the popover and its inner box are
+   rounded. The theme's rule is square corners, and `.articleBody sup` would
+   shift the chip a second time on top of core.css's lift — so the radius and
+   the vertical-align are reset here as well as the colours.
+   ============================================================================ */
+
+/* core.css sets `sup[id^='fn'] { vertical-align: baseline }` precisely because
+   the chip offsets itself; without this reset the marker rides ~0.2em high. */
+sup[id^='fn'] {
+	vertical-align: baseline;
+	bottom: 0;
+}
+
+.newsfoot-footnote-popover {
+	background: var(--panel);
+	border: 1px solid var(--hair);
+	border-radius: 0;
+	color: var(--ink);
+	padding: 2px;
+}
+
+.newsfoot-footnote-popover-arrow {
+	background: var(--panel);
+	border: 1px solid var(--hair);
+}
+
+.newsfoot-footnote-popover-inner {
+	background: var(--panel);
+	border-radius: 0;
+}
+
+body a.footnote,
+body a.footnote:link,
+body a.footnote:visited {
+	/* Footnote markers are inverted chips, not prose: they keep a rule flush with
+	   the chip, which the underline path would otherwise float below it.
+	   The :link/:visited spellings are not decoration — `.articleBody a:link`
+	   out-specifies a bare `body a.footnote`, so without them the chip's text
+	   takes the link accent and the chip stops looking inverted. */
+	text-decoration: none;
+	border-bottom: 1px solid var(--hair);
+	border-radius: 0;
+	background: var(--faint);
+	color: var(--bg);
+	transition: background-color 200ms ease-out;
+}
+
+/* Same specificity as the chip rule above (body + a + two class-level
+   selectors), so the highlight is decided by source order, as intended. */
+body a.footnote:hover,
+body .newsfoot-footnote-popover + a.footnote {
+	background: var(--accent);
+	border-bottom-color: var(--accent);
+	color: var(--bg);
+	transition: background-color 200ms ease-out;
+}
+
+/* ============================================================================
+   iOS  ([[font-size]] is substituted here only — never emit it elsewhere)
+
+   Unverified on a device: this block has only ever been exercised in a macOS
+   WKWebView with the gate forced open, so [[font-size]], -webkit-hyphens,
+   -webkit-text-size-adjust and the body padding above are best-effort. The
+   footnote popover's placement is computed by the app's own script (this file
+   only colours it), and :visited is not observable from WebKit.
+   ============================================================================ */
+
+@supports (-webkit-touch-callout: none) {
+	:root {
+		color-scheme: light dark;
+	}
+
+	body {
+		padding: 4px 20px 28px;
+		font-size: [[font-size]]px;
+		word-break: break-word;
+		-webkit-hyphens: auto;
+		-webkit-text-size-adjust: none;
+	}
+
+	.fontSize {
+		font-size: [[font-size]]px;
+	}
+}
+
+/* ============================================================================
+   macOS  (the five fixed text sizes from Settings; [[text_size_class]] lands
+   on the .fontSize wrapper, and resolves to empty on iOS)
+   ============================================================================ */
+
+@supports not (-webkit-touch-callout: none) {
+	:root {
+		color-scheme: light dark;
+	}
+
+	body {
+		padding: 26px 44px 40px;
+	}
+
+	.smallText {
+		font-size: 14px;
+	}
+
+	.mediumText {
+		font-size: 16px;
+	}
+
+	.largeText {
+		font-size: 18px;
+	}
+
+	/* Both spellings on purpose. The app substitutes these class names into the
+	   template from `ArticleTextSize.cssClass`, which returns `xLargeText` and
+	   `xxLargeText` — capital L — while the app's own stylesheet and every bundled
+	   theme style `.xlargeText` / `.xxlargeText`. One of the two is wrong, and CSS
+	   class matching is case-sensitive, so the two largest text sizes silently do
+	   nothing wherever the spellings disagree. Covering both costs four lines. */
+	.xlargeText,
+	.xLargeText {
+		font-size: 20px;
+	}
+
+	.xxlargeText,
+	.xxLargeText {
+		font-size: 22px;
+	}
+}
