@@ -14,8 +14,13 @@
    Type sizes are written in em on purpose. The reader's text-size setting
    lands on the .fontSize wrapper (macOS class, iOS [[font-size]]), and rem
    resolves against html — always 16px — so rem-based headings and metadata
-   would ignore the setting and flatten against the body text. --measure is
-   the one deliberate rem: it is a column width, not type.
+   would ignore the setting and flatten against the body text.
+
+   The measure is the one thing that moves with the setting too: each size class
+   sets its own --measure and .fontSize carries it as max-width. Bigger type gets
+   a wider column but a shorter line — 43.7 汉字 at 14px down to 32.7 at 22px —
+   which is the fraction of the story that changed: the column used to be flat
+   at 552px whatever the reader picked.
    ============================================================================ */
 
 /* ---- Tokens (light) ---- */
@@ -29,35 +34,51 @@
 	--line: rgba(29, 31, 33, 0.8);
 	--hair: rgba(29, 31, 33, 0.14);
 
-	/* Latin text is left to the system: NetNewsWire is Apple-only, so Avenir Next
-	   is already on the device and no bytes are embedded for it. The theme asks
-	   for 300/400/500/600 and that family has no Light, so 300 lands on Ultra
-	   Light (measured), so the title is lighter than a typical 300 would be.
-	   Nothing here is redistributed: the face is only referenced by name, on
-	   hardware Apple ships it for.
+	/* Latin is the system's: NetNewsWire is Apple-only, Avenir Next is on every
+	   device it runs on, and the theme reaches it by family name and embeds
+	   nothing. This is where the theme started; an embedded Geist (324 KB) came
+	   and went, and what it bought — ǐ ǒ ǔ and Greek, which Avenir Next already
+	   had — was not worth bytes every reader pays for.
 
-	   'IBM Plex Sans SC' is the embedded CJK face (see fonts/vendored-fonts.css).
-	   It is listed after the Latin family because it claims the CJK ranges only —
-	   Latin, digits and ASCII punctuation never reach it. PingFang SC sits behind
-	   it for the characters this face has no drawing for. */
-	--font-sans: 'Avenir Next', 'IBM Plex Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+	   '-apple-system' stays last and catches what none of the named faces draw:
+	   ⇒, and the box drawing the mono face does not take.
+
+	   'PingFang SC' is named *ahead of* -apple-system because -apple-system
+	   carries its own cascade for Han, and going through it did not honour the
+	   requested weight: the same string sampled at 500 measured 10.90M ink
+	   against PingFang SC's own Medium at 12.12M, i.e. visibly light of the face
+	   it was supposed to be. Named first (12.1159M against the same Medium's
+	   12.1158M), h2-h6's 500 is the real Medium. Latin never reaches it:
+	   PingFang SC's non-Han coverage is a single interpunct.
+
+	   Chinese is the system's own face too. It used to be three embedded IBM Plex
+	   Sans SC statics — 11.12 MB, 97% of everything this theme shipped — and the
+	   set was short one weight: h2-h6 ask for 500, and it stopped at 400/600.
+	   PingFang SC draws six weights (Ultralight through Semibold), so 300, 400,
+	   500 and 600 are each a real face, for no bytes at all. */
+	--font-sans: 'Avenir Next', 'PingFang SC', -apple-system, 'Microsoft YaHei', sans-serif;
 	/* Display type is the only thing that asks for 300, and Avenir Next has no
-	   Light — a 300 request there lands on Ultra Light, whose strokes carry less
-	   than half the ink of the Chinese face's 300 (measured at 22px: 2.31% vs
-	   5.49%), which reads as hairline English next to solid Chinese. So display
-	   type takes its Latin from the older Avenir family, whose Light is a real
-	   300 (4.32% — a ratio of 0.79 against the Chinese, versus 0.42 for Ultra
-	   Light). Only family names are involved; nothing is embedded. */
-	--font-display: 'Avenir', 'Avenir Next', 'IBM Plex Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-	--font-mono: 'Ioskeley Mono', ui-monospace, 'SF Mono', Menlo, 'IBM Plex Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace;
+	   Light — a 300 request there lands on Ultra Light. Measured at 96px: 8.36%
+	   ink, against the older Avenir family's real Light at 19.40%, and against
+	   PingFang SC's 300 (Chinese) at 29.19% — a ratio of 0.29 where Avenir's is
+	   0.66. So display type takes its Latin from Avenir. Only family names are
+	   involved and nothing is embedded; this is the one reason the token exists. */
+	--font-display: 'Avenir', 'Avenir Next', 'PingFang SC', -apple-system, 'Microsoft YaHei', sans-serif;
+	--font-mono: 'IBM Plex Mono Var', 'PingFang SC', ui-monospace, 'SF Mono', Menlo, 'Microsoft YaHei', monospace;
 	/* font-synthesis-style is deliberately left at its default. Chinese has no
-	   italic face anywhere, so an <em> that mixes scripts would otherwise render
-	   half italic (Latin, a real face) and half upright (Chinese) inside one
-	   phrase — the fake slant is what keeps it uniform. Text inside code,
-	   figcaption and th is the other way round: 400/500 italics are embedded
-	   there, so those get a real face instead of a sheared upright. */
+	   italic face anywhere (PingFang SC included), so an <em> that mixes scripts
+	   would otherwise render half italic (Latin, a real face) and half upright
+	   (Chinese) inside one phrase — the fake slant is what keeps it uniform. Text
+	   inside code, figcaption and th is the other way round: the mono face
+	   carries a real italic across its whole axis, so those get a real face
+	   instead of a sheared upright. */
 
-	--measure: 40rem;	/* rem on purpose: column width, must not scale with type */
+	/* Column width — the one token that deliberately moves with the reader's text
+	   size. Each size class at the bottom of the file sets its own; this is the
+	   fallback for iOS and for anything that arrives without a class. 640px is the
+	   mediumText column, and it is the column — not the box around it: body's side
+	   padding sits outside the element this lands on. */
+	--measure: 640px;
 	--tracking-head: 0.04em;
 	--tracking-mono: 0.08em;
 }
@@ -85,7 +106,10 @@
 }
 
 body {
-	max-width: var(--measure);
+	/* Centring and the column width moved to .fontSize: that is the element the
+	   reader's text size also lands on, so putting the measure there is what lets
+	   it follow the setting. These auto margins stay to cancel the UA's 8px body
+	   margin — left to itself that would narrow every column by 16px. */
 	margin-left: auto;
 	margin-right: auto;
 	background-color: var(--bg);
@@ -96,6 +120,12 @@ body {
 	font-weight: 400;
 	word-wrap: break-word;
 	-webkit-font-smoothing: antialiased;
+}
+
+.fontSize {
+	max-width: var(--measure);
+	margin-left: auto;
+	margin-right: auto;
 }
 
 /* Paper grain. The site's signature texture, kept faint so it never fights
@@ -218,6 +248,8 @@ em {
 .articleTitle {
 	margin: 26px 0 0;
 	font-size: 1.65em;
+	/* Display type does not share the body stack: its 300 needs Avenir's real
+	   Light, because Avenir Next has none. See --font-display above. */
 	font-family: var(--font-display);
 	font-weight: 300;
 	line-height: 1.28;
@@ -703,16 +735,23 @@ body .newsfoot-footnote-popover + a.footnote {
 		padding: 26px 44px 40px;
 	}
 
+	/* Font size and column width, one pair per reader setting. The column grows
+	   with the size but slower: 14px gets 612px (43.7 汉字 a line), 22px gets 720px
+	   (32.7) — bigger type gets a shorter line. Both ends were given; the three in
+	   between are the straight line through them, rounded to 4px. */
 	.smallText {
 		font-size: 14px;
+		--measure: 612px;
 	}
 
 	.mediumText {
 		font-size: 16px;
+		--measure: 640px;
 	}
 
 	.largeText {
 		font-size: 18px;
+		--measure: 668px;
 	}
 
 	/* Both spellings on purpose. The app substitutes these class names into the
@@ -724,10 +763,12 @@ body .newsfoot-footnote-popover + a.footnote {
 	.xlargeText,
 	.xLargeText {
 		font-size: 20px;
+		--measure: 692px;
 	}
 
 	.xxlargeText,
 	.xxLargeText {
 		font-size: 22px;
+		--measure: 720px;
 	}
 }

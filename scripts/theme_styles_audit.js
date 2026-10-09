@@ -190,7 +190,7 @@ const assertions = {
 	'mark 压 accent 底线': eqToken('.articleBody mark', 'border-bottom-color', '--accent'),
 	'sup 上标位移': { pass: parseFloat(cs('.articleBody sup', 'bottom')) > 0, got: cs('.articleBody sup', 'bottom'), want: '正长度（0.2em，默认 auto）' },
 	'sub 下标位移': { pass: parseFloat(cs('.articleBody sub', 'top')) > 0, got: cs('.articleBody sub', 'top'), want: '正长度（0.2em，默认 auto）' },
-	'h4 换到等宽': includes('.articleBody h4', 'font-family', 'ioskeley'),
+	'h4 换到等宽': includes('.articleBody h4', 'font-family', 'ibm plex mono var'),
 	// Sizes are em-based, so assert the shape (strictly decreasing, h4 == body)
 	// rather than numbers that depend on the preview's text-size class.
 	'h1..h6 层级字号递减且 h4 等于正文': (() => {
@@ -216,7 +216,7 @@ const assertions = {
 	'图片不溢出': eq('.articleBody figure img', 'max-width', '100%'),
 	'.avatar 固定 34px': eq('.avatar', 'width', '34px'),
 	'feed 名走大写 + 字距': eq('.feedlink', 'text-transform', 'uppercase'),
-	'.nnwDateTime 用等宽': includes('.nnwDateTime', 'font-family', 'ioskeley'),
+	'.nnwDateTime 用等宽': includes('.nnwDateTime', 'font-family', 'ibm plex mono var'),
 	'.articleTitle 是 300': eq('.articleTitle', 'font-weight', '300'),
 	'.feedbin--article-wrap 顶部 hairline': eq('.feedbin--article-wrap', 'border-top-width', '1px'),
 	'脚注芯片反色（手写 class，底 = --faint，字 = --bg）': {
@@ -249,12 +249,67 @@ const assertions = {
 	'.record 底部分区线': eq('.record', 'border-bottom-width', '1px'),
 	'.record 是 flex 行': eq('.record', 'display', 'flex'),
 	'.articleTitle 链接不加重下划线': eq('.articleTitle a', 'text-decoration-line', 'none'),
-	'.footer 用等宽': includes('.footer', 'font-family', 'ioskeley'),
+	'.footer 用等宽': includes('.footer', 'font-family', 'ibm plex mono var'),
 	'.footer 链接取 accent': eqToken('.footer a', 'color', '--accent'),
 	'.byline 链接不染色': eqToken('.byline a', 'color', '--faint'),
 	'strong 钉在 600': eq('.articleBody strong', 'font-weight', '600'),
 	'pre code 字号继承外层': eq('.articleBody pre code', 'font-size', cs('.articleBody pre', 'font-size')),
-	'正文列宽 = --measure（在 body 上）': eq('body', 'max-width', '640px'),
+	// The column lives on .fontSize, not body: that is the element the app's text
+	// size class also lands on, so it is the only one that can carry a per-size
+	// measure. Body's max-width is gone — keep an eye on this one.
+	'版心 = .fontSize 的 max-width，取自当前档位的 --measure': (() => {
+		const el = document.querySelector('.fontSize');
+		if (!el) return { pass: false, got: '没有 .fontSize 元素', want: '有' };
+		const want = getComputedStyle(el).getPropertyValue('--measure').trim();
+		const got = getComputedStyle(el).maxWidth;
+		const sizeCls = [...el.classList].find((c) => c !== 'fontSize') || '(无档位类)';
+		return { pass: got === want && got !== 'none', got, want: want + '（.' + sizeCls + '）' };
+	})(),
+	// The measure now varies by reader text size instead of being a flat 40rem.
+	// Seven spellings, because the app and the bundled themes disagree on case.
+	'版心五档（--measure，含两种大小写拼法）': (() => {
+		const want = { smallText: '612px', mediumText: '640px', largeText: '668px', xLargeText: '692px', xxLargeText: '720px', xlargeText: '692px', xxlargeText: '720px' };
+		const bad = [];
+		for (const [cls, px] of Object.entries(want)) {
+			const el = document.querySelector('.' + cls);
+			if (!el) { bad.push(cls + ' 没有演示元素'); continue; }
+			const got = getComputedStyle(el).getPropertyValue('--measure').trim();
+			if (got !== px) bad.push(cls + ' = ' + (got || '(空)') + '，期望 ' + px);
+		}
+		return { pass: bad.length === 0, got: bad.length ? bad.join(' · ') : '七种拼法都给出了 --measure', want: '612/640/668/692/720px' };
+	})(),
+	// The sans stack's order is load-bearing, and every link was bought with a
+	// measurement: Avenir Next carries Latin, PingFang SC has to come *before*
+	// the system keywords or Han's 500 lands light of its Medium, and
+	// -apple-system is last for what the named faces have no drawing for.
+	'--font-sans 顺序：Avenir Next → PingFang SC → -apple-system': (() => {
+		const entries = cs('body', 'font-family').split(',').map((s) => s.trim().replace(/^["']|["']$/g, ''));
+		const at = (n) => entries.indexOf(n);
+		const problems = [];
+		if (at('Avenir Next') !== 0) problems.push('Avenir Next 不在最前');
+		for (const [a, b] of [['Avenir Next', 'PingFang SC'], ['PingFang SC', '-apple-system']]) {
+			if (at(a) < 0 || at(b) < 0) problems.push(a + ' 或 ' + b + ' 不在栈里');
+			else if (at(a) >= at(b)) problems.push(a + ' 排到了 ' + b + ' 之后');
+		}
+		if (at('Geist') >= 0) problems.push('还带着已经移除的 Geist');
+		return { pass: problems.length === 0, got: problems.length ? problems.join(' · ') : entries.join(' → '), want: 'Avenir Next → PingFang SC → -apple-system' };
+	})(),
+	// --font-display is the 300 fix, not a style choice: Avenir Next has no Light,
+	// so a 300 landing there is Ultra Light（实测 96px：8.36% 墨，Avenir 的真 Light
+	// 是 19.40%）。所以显示字面的拉丁必须取 Avenir，且必须排在 Avenir Next 之前。
+	'--font-display 顺序：Avenir → Avenir Next → PingFang SC → -apple-system': (() => {
+		const el = document.querySelector('.articleTitle');
+		if (!el) return { pass: false, got: '没有 .articleTitle 元素', want: '有' };
+		const entries = getComputedStyle(el).fontFamily.split(',').map((s) => s.trim().replace(/^["']|["']$/g, ''));
+		const at = (n) => entries.indexOf(n);
+		const problems = [];
+		if (at('Avenir') !== 0) problems.push('Avenir 不在最前（300 会落到 Avenir Next 的 Ultra Light）');
+		for (const n of ['Avenir Next', 'PingFang SC', '-apple-system']) {
+			if (at(n) < 0) problems.push(n + ' 不在栈里');
+			else if (at('Avenir') >= at(n)) problems.push('Avenir 排到了 ' + n + ' 之后');
+		}
+		return { pass: problems.length === 0, got: problems.length ? problems.join(' · ') : entries.join(' → '), want: 'Avenir → Avenir Next → PingFang SC → -apple-system' };
+	})(),
 	'core.css 已载入（html scrollbar-gutter）': eq('html', 'scrollbar-gutter', 'stable'),
 	'theme 原则「无圆角」: 脚注芯片': eq('body a.footnote', 'border-radius', '0px'),
 	'theme 原则「无圆角」: 脚注 popover': eq('.newsfoot-footnote-popover', 'border-radius', '0px'),

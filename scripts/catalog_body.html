@@ -30,7 +30,7 @@
 <h2>1 · 段落与内联</h2>
 
 <p class="spec-line"><code>.articleBody p</code> — margin 0 0 1.15em，正文色 --soft</p>
-<p>这是一个正文段落。字形骨架由系统的 Avenir Next 与内嵌的 IBM Plex Sans SC 承担，行高 1.75，颜色是比标题低一档的 --soft。段落之间靠 1.15em 的下边距分开。</p>
+<p>这是一个正文段落。字形骨架由系统的 Avenir Next（拉丁）与系统的 PingFang SC（中文）承担，行高 1.75，颜色是比标题低一档的 --soft。段落之间靠 1.15em 的下边距分开。</p>
 <p>第二段，用来确认段间距。</p>
 
 <p class="spec-line"><code>strong</code> <code>b</code> · <code>em</code> · <code>del</code> <code>s</code> · <code>mark</code></p>
@@ -63,8 +63,8 @@
 	<li id="fn1">这是脚注正文 <a class="footnote-return" href="#fnref1">↩</a></li>
 </ol>
 
-<p class="spec-line"><code>字体</code> — 拉丁走系统 Avenir Next（不内嵌）；300 显示为 Ultra Light，400 Regular，500 Medium，600 Demi Bold · 中文是内嵌的 IBM Plex Sans SC 300/400/600 · 元数据、代码与图注是内嵌的 Ioskeley Mono 400/500/600</p>
-<p>中文那三档是三个真字面，不是渲染器合成：文章标题 300、正文 400、<strong>加粗 600</strong>。表头与 h6 请求的 500 在中文里按 CSS 字重匹配落到 600（这个面没有 500），所以中文表头比拉丁表头略重一档。</p>
+<p class="spec-line"><code>字体</code> — 拉丁与中文都交给系统，零字节：正文是 <strong>Avenir Next</strong>（400/500/600 分别落 Regular / Medium / DemiBold）· 标题与 h1 走 <code>--font-display</code>，拉丁取 <strong>Avenir</strong>（Avenir Next 没有 Light，300 会掉到 Ultra Light）· 中文是 <strong>PingFang SC</strong>（Light / Regular / Medium / Semibold）· 只有元数据、代码与图注是内嵌的 <strong>IBM Plex Mono Var</strong>（可变，wght 100–700，含真斜体）</p>
+<p>中文那四档都是 PingFang SC 的真字面，不是渲染器合成：文章标题 300、正文 400、h2–h6 与表头 500、<strong>加粗 600</strong>。以前内嵌的 IBM Plex Sans SC 只有 300/400/600，没有 500，h2–h6 的 500 只能落到邻近的一档；现在 500 是真的 Medium。</p>
 
 <!-- ───────────────────────────────────────────────────────────── 标题 -->
 <h2>2 · 标题层级</h2>
@@ -212,8 +212,10 @@ console.log(`loaded: ${theme}`);</code></pre>
 <!-- ───────────────────────────────────────────────────────────── 字号档位 -->
 <h2>9 · 字号档位</h2>
 
-<p class="spec-line">macOS 五档：<code>.smallText</code> 14px · <code>.mediumText</code> 16px · <code>.largeText</code> 18px ·
-<code>.xlargeText</code> 20px · <code>.xxlargeText</code> 22px</p>
+<p class="spec-line">macOS 五档（字号 / 版心）：<code>.smallText</code> 14px / 612px · <code>.mediumText</code> 16px / 640px ·
+<code>.largeText</code> 18px / 668px · <code>.xlargeText</code> 20px / 692px · <code>.xxlargeText</code> 22px / 720px</p>
+<p>每档同时给 <code>--measure</code>，<code>.fontSize</code> 把它当 <code>max-width</code> —— 所以列宽（版心）跟着阅读器的字号设置变：14px 时一行约 43.7 个汉字，22px 时约 32.7 个。<strong>字号越大行越短</strong>。窗口不足时版心取「视口宽度 − 88px」与档位值的较小者。注意 <code>max-width</code> 在 <code>.fontSize</code> 上而不在 <code>body</code> 上：字号类就加在这个 div 上，只有同元素的 <code>--measure</code> 才能作用到自己的 <code>max-width</code>。</p>
+<p class="spec-line">下面七行的字号是它们自己带的类，但版心属于外层那个 <code>.fontSize</code>（预览页是 <code>largeText</code> 档）—— 所以这七行不会各自变宽。要逐档看列宽，改 <code>make_catalog.py</code> 的 <code>text_size_class</code> 重新生成。</p>
 <p class="spec-line"><strong>注意拼法</strong>：app 替换进模板的类名来自 <code>ArticleTextSize.cssClass</code>，它返回的是
 <code>xLargeText</code> / <code>xxLargeText</code>（<strong>大写 L</strong>），而 app 自己的默认样式表和官方主题都写
 <code>.xlargeText</code> / <code>.xxlargeText</code>。CSS 类名大小写敏感，两边不一致时两个最大档位就是死的 ——
@@ -227,7 +229,7 @@ console.log(`loaded: ${theme}`);</code></pre>
 <p class="xxlargeText">xxlargeText 22px —— 同上。</p>
 
 <p class="spec-line"><code>.fontSize</code> + <code>[[font-size]]</code> — iOS 专用：字号由模板变量注入，不是这五个类</p>
-<p>iOS 分支（<code>@supports (-webkit-touch-callout: none)</code>）另外给 body 加了 4px 20px 28px 的内边距、<code>word-break: break-word</code>、<code>-webkit-hyphens: auto</code>、<code>-webkit-text-size-adjust: none</code>。<strong>这些在 macOS 预览里看不到</strong>，只能在真机或 iOS 模拟器确认。<code>[[text_size_class]]</code> 只在 macOS 被替换（app 源码里包在 <code>#if os(macOS)</code>），iOS 用的是 <code>[[font-size]]</code>。</p>
+<p>iOS 分支（<code>@supports (-webkit-touch-callout: none)</code>）另外给 <code>.fontSize</code> 加了 4px 20px 28px 的内边距、<code>word-break: break-word</code>、<code>-webkit-hyphens: auto</code>、<code>-webkit-text-size-adjust: none</code>。因为 <code>box-sizing: border-box</code>，那 20px×2 会被算进 <code>max-width</code>，**iOS 的版心比 <code>--measure</code> 小 40px**。<strong>这些在 macOS 预览里看不到</strong>，只能在真机或 iOS 模拟器确认。<code>[[text_size_class]]</code> 只在 macOS 被替换（app 源码里包在 <code>#if os(macOS)</code>），iOS 用的是 <code>[[font-size]]</code>。</p>
 
 <!-- ───────────────────────────────────────────────────────────── 未接管 -->
 <h2>10 · 主题未接管的部分</h2>

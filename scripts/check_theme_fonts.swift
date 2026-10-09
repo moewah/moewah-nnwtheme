@@ -37,11 +37,13 @@ for match in blockRE.matches(in: css, range: NSRange(css.startIndex..., in: css)
 let unique = Array(Set(declared)).sorted()
 print("\(theme.lastPathComponent): \(declared.count) @font-face rules, families: \(unique.joined(separator: ", "))")
 
-// The Latin face is not embedded — the theme is Apple-only and Avenir Next is
-// already on the device — so it has no @font-face to inspect. Take the first
-// real family name out of each --font-* stack and test it the same way: if it
-// renders as the fallback reference, the stack has quietly collapsed to a
-// system font, which is the kind of failure this script exists for.
+// Every family the theme asks for is embedded, so the stacks are checked as
+// well as the @font-face rules: take the first family name out of each
+// --font-* stack and render with it. If it comes back as the fallback
+// reference, the stack has quietly collapsed to a system font, which is the
+// kind of failure this script exists for. (This earned its keep when the
+// theme still named Avenir Next, a system family that could only ever be
+// asserted by name and never measured.)
 let stackRE = try! NSRegularExpression(pattern: "--font-[a-z]+:\\s*'([^']+)'")
 var stackFamilies: [String] = []
 for match in stackRE.matches(in: css, range: NSRange(css.startIndex..., in: css)) {
@@ -92,8 +94,8 @@ const refs = {
 	// that does not exist renders as the canvas default, and that default was
 	// measured to be what `serif` produces — not Helvetica. Without it, a missing
 	// face reported "distinct" and the check could not fail. (Verified by
-	// swapping 'Avenir Next' for a name that does not exist: with this reference
-	// the run fails, without it it passed.)
+	// swapping a real family name for a name that does not exist: with this
+	// reference the run fails, without it it passed.)
 	latin: { 'Helvetica': shot('Helvetica', 'MoeWah 0123'), 'Times New Roman': shot('Times New Roman', 'MoeWah 0123'), 'serif（未知家族的回落目标）': shot('serif', 'MoeWah 0123') },
 };
 const out = { loaded: [...document.fonts].filter(f => f.status === 'loaded').map(f => f.family + '/' + f.weight + (f.style === 'italic' ? ' italic' : '')), rendered: {} };

@@ -4,88 +4,45 @@
    pinned in that script and a copy of the SIL Open Font License 1.1 travelling
    with it in this folder:
 
-     IBM Plex Sans SC  300/400/600   the CJK face          OFL-IBM-Plex-Sans-SC.txt
-     Ioskeley Mono     400/500/600   metadata and code     OFL-Ioskeley-Mono.txt
-                      +400/500 italic                       OFL-Iosevka.txt
+     IBM Plex Mono Var  wght 100-700   metadata and code     OFL-IBM-Plex.txt
+                      +wght 100-700 italic
 
-   Latin text is left to the system: NetNewsWire is Apple-only, and
-   src/stylesheet.css assembles Avenir's weights with local(). IBM Plex declares
-   the reserved font name "Plex", which the licence withholds from Modified
-   Versions — and the OFL counts *deleting from* a font, i.e. subsetting, as
-   making one. So none of these files is subset or converted, which is also why
-   none of them can be trimmed to save weight later without being renamed.
-   Ioskeley Mono is a build of Iosevka: it carries Ahmed Hatem's licence and
-   retains Iosevka's upstream notice, so both texts ship.
+   It is variable: one file per style covers every weight the theme asks for,
+   where the faces it replaced spelled out a file per weight. Weight is driven
+   by ordinary font-weight — the range is declared here and the browser walks
+   the axis — never by font-variation-settings.
 
-   The CJK faces carry a unicode-range fence so Latin, digits and ASCII
-   punctuation stay on the system sans: only Han characters, kana and CJK punctuation
-   switch faces. Characters Plex Sans SC has no drawing for fall through to
-   PingFang SC. The mono faces carry no fence — they should claim everything
-   they have, box drawing and arrows included. */
+   This is the only embedded face. Latin is the system's Avenir Next — with
+   Avenir behind --font-display for the 300 Avenir Next has no Light for — and
+   Chinese is PingFang SC. NetNewsWire is Apple-only, so both are on every
+   device it runs on; see the docstring in build_vendored_fonts.py, and the
+   comments beside --font-sans / --font-display in stylesheet.css.
+
+   Chinese is the system's face outright — PingFang SC. It was three embedded
+   IBM Plex Sans SC statics: 11.12 MB of the 11.43 MB this folder carried, and
+   they covered one weight fewer than PingFang does — no 500, which the h2-h6
+   rule asks for.
+
+   IBM Plex declares the reserved font name "Plex", which clause 3 withholds
+   from Modified Versions — and the OFL counts *changing formats* and *deleting
+   from* a font, i.e. subsetting, as making one. So neither file is subset or
+   converted; each is the byte-for-byte artifact its publisher shipped.
+   OFL-IBM-Plex.txt is named for the family; IBM ships the same bytes with every
+   Plex webfont. Nor does any face carry a unicode-range fence any more — with
+   Chinese off to the system there is nothing left to fence off. */
 
 @font-face {
-	font-family: 'IBM Plex Sans SC';
+	font-family: 'IBM Plex Mono Var';
 	font-style: normal;
-	font-weight: 300;
+	font-weight: 100 700;
 	font-display: swap;
-	src: url(fonts/ibmplexsanssc-300.woff2) format('woff2');
-	unicode-range: U+2E80-2EFF, U+3000-303F, U+3040-30FF, U+3100-312F, U+3200-33FF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FE10-FE1F, U+FE30-FE4F, U+FF00-FFEF, U+20000-2FA1F;
+	src: url(fonts/ibmplexmono-var.woff2) format('woff2');
 }
 
 @font-face {
-	font-family: 'IBM Plex Sans SC';
-	font-style: normal;
-	font-weight: 400;
-	font-display: swap;
-	src: url(fonts/ibmplexsanssc-400.woff2) format('woff2');
-	unicode-range: U+2E80-2EFF, U+3000-303F, U+3040-30FF, U+3100-312F, U+3200-33FF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FE10-FE1F, U+FE30-FE4F, U+FF00-FFEF, U+20000-2FA1F;
-}
-
-@font-face {
-	font-family: 'IBM Plex Sans SC';
-	font-style: normal;
-	font-weight: 600;
-	font-display: swap;
-	src: url(fonts/ibmplexsanssc-600.woff2) format('woff2');
-	unicode-range: U+2E80-2EFF, U+3000-303F, U+3040-30FF, U+3100-312F, U+3200-33FF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FE10-FE1F, U+FE30-FE4F, U+FF00-FFEF, U+20000-2FA1F;
-}
-
-@font-face {
-	font-family: 'Ioskeley Mono';
-	font-style: normal;
-	font-weight: 400;
-	font-display: swap;
-	src: url(fonts/ioskeleymono-400.woff2) format('woff2');
-}
-
-@font-face {
-	font-family: 'Ioskeley Mono';
-	font-style: normal;
-	font-weight: 500;
-	font-display: swap;
-	src: url(fonts/ioskeleymono-500.woff2) format('woff2');
-}
-
-@font-face {
-	font-family: 'Ioskeley Mono';
-	font-style: normal;
-	font-weight: 600;
-	font-display: swap;
-	src: url(fonts/ioskeleymono-600.woff2) format('woff2');
-}
-
-@font-face {
-	font-family: 'Ioskeley Mono';
+	font-family: 'IBM Plex Mono Var';
 	font-style: italic;
-	font-weight: 400;
+	font-weight: 100 700;
 	font-display: swap;
-	src: url(fonts/ioskeleymono-400-italic.woff2) format('woff2');
-}
-
-@font-face {
-	font-family: 'Ioskeley Mono';
-	font-style: italic;
-	font-weight: 500;
-	font-display: swap;
-	src: url(fonts/ioskeleymono-500-italic.woff2) format('woff2');
+	src: url(fonts/ibmplexmono-var-italic.woff2) format('woff2');
 }

@@ -25,10 +25,10 @@ mkdir -p "$BUNDLE/fonts"
 cp "$SRC/Info.plist" "$BUNDLE/"
 cp "$SRC/template.html" "$BUNDLE/"
 # No font binaries go into the bundle: the stylesheet carries every face
-# inlined as a data: URI (see below), and neither OFL has an as-is clause that
-# would ask for a second, loose copy. What does have to travel is one licence
-# per face, each carrying its own copyright line — IBM Plex Sans SC's (reserved
-# font name "Plex") and Ioskeley Mono's — not a blank template.
+# inlined as a data: URI (see below), and no OFL has an as-is clause that
+# would ask for a second, loose copy. What does have to travel is the licences,
+# IBM Plex's own copyright line and the OFL text it ships with. One embedded
+# family now — mono — so one licence travels; Latin and Chinese are the system's.
 cp "$SRC/fonts"/OFL-*.txt "$BUNDLE/fonts/"
 
 # NetNewsWire loads a theme's stylesheet with the *article's* URL as the base

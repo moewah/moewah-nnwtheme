@@ -17,17 +17,19 @@ while the same font as a data: URI loads and renders.)
 So the fonts are inlined here. Costs and constraints, for whoever touches this
 next:
 
-  - `stylesheet.css` grows by ~4/3 of the font bytes: ~16 MB with the CJK and
-    mono faces.
+  - `stylesheet.css` grows by ~4/3 of the font bytes: 0.25 MB, from the two mono
+    faces (176 KB). It was 15 MB while three IBM Plex Sans SC statics were
+    embedded for Chinese, and 0.43 MB while an embedded Geist covered Latin.
+    Both are gone; both scripts are the system's now.
   - The whole thing is one string that the app inlines into every article's
     HTML. Measured in a WKWebView harness, the first render is not measurably
     slower than with external font URLs — the payload is local, not networked.
-  - The CJK face is IBM Plex Sans SC and the mono face is Ioskeley Mono, both
-    under the OFL 1.1: their bytes are embedded whole and unmodified (base64 of
-    the release files), and one licence per face ships in fonts/. IBM Plex
-    declares the reserved font name "Plex", which a subsetted or converted copy
-    could not keep — so do not subset, convert or rename these either. Latin
-    text is not here at all: it uses the system's Avenir Next.
+  - IBM Plex Mono Var is the only embedded face, and it is under the OFL 1.1:
+    its bytes are embedded whole and unmodified (base64 of the release files),
+    and the licence ships in fonts/. IBM Plex declares the reserved font name
+    "Plex", which a subsetted or converted copy could not keep — so do not
+    subset, convert or rename these either. Latin and Chinese are both the
+    system's now (Avenir Next / Avenir, and PingFang SC): no bytes for either.
 
     python3 scripts/inline_fonts.py [output.css]
 
