@@ -530,7 +530,10 @@ sub {
 	top: 0.2em;
 }
 
-/* ---- Tables: hairline grid, no fill ---- */
+/* ---- Tables: rules, not a box ---- */
+/* Structure comes from three horizontal rules, as on the site: no box, no
+   vertical rules, a --line rule under the header, a --hair rule between rows,
+   and a --line rule closing the table. */
 /* Spacing lives on the wrapper, not the table: the wrapper is what the app's
    JavaScript injects around every table, and it is also the scroll container.
    The nested rule matters because that script wraps nested tables too. */
@@ -547,51 +550,49 @@ sub {
 	/* A table's default width is shrink-to-fit, which leaves short tables
 	   floating in the middle of the column instead of filling it. */
 	width: 100%;
-	margin-bottom: 1px;
 	border-spacing: 0;
-	border: 1px solid var(--line);
-	font-size: inherit;
+	/* `border` on a <table> is a presentational hint, and hints sit at the front
+	   of the author origin: an explicit 0 is what keeps <table border="1"> from
+	   drawing the UA's outset box around a table that is rules only. */
+	border: 0;
+	/* The site runs the table a notch below prose, so a cell reads denser than
+	   the paragraph it sits in; line-height comes down with it. */
+	font-size: 0.92em;
+	line-height: 1.7;
 }
 
 .nnw-overflow table table {
 	width: auto;
-	margin-bottom: 0;
-	border: none;
 }
 
 .nnw-overflow td,
 .nnw-overflow th {
-	padding: 6px 9px;
-	border: 1px solid var(--hair);
-	border-top: none;
-	border-left: none;
+	padding: 8px 12px;
+	border: 0;
+	border-bottom: 1px solid var(--hair);
+	vertical-align: top;
 	-webkit-hyphens: none;
 	word-break: normal;
 }
 
 .nnw-overflow th {
 	font-family: var(--font-mono);
-	font-size: 0.85em;
-	font-weight: 500;
-	letter-spacing: 0.04em;
+	font-size: 0.86em;
+	font-weight: 600;
+	letter-spacing: var(--tracking-mono);
+	text-align: left;
+	white-space: nowrap;
 	color: var(--faint);
-}
-
-.nnw-overflow tr :matches(td, th):last-child {
-	border-right: none;
+	border-bottom-color: var(--line);
 }
 
 .nnw-overflow :matches(thead, tbody, tfoot):last-child > tr:last-child :matches(td, th) {
-	border-bottom: none;
+	border-bottom-color: var(--line);
 }
 
 .nnw-overflow td pre {
 	border: none;
 	padding: 0;
-}
-
-.nnw-overflow table[border="0"] {
-	border-width: 0;
 }
 
 /* ---- Feed-specific leftovers ---- */

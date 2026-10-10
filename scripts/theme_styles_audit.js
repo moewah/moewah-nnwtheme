@@ -167,13 +167,27 @@ const assertions = {
 		return { pass: got === 0, got: got + 'px', want: '0px' };
 	})(),
 
-	'table 末列无右边框 (:matches(td,th):last-child)': eq('.nnw-overflow table tr td:last-child', 'border-right-width', '0px'),
-	'table 末行无下边框 (:matches(thead,tbody,tfoot):last-child)': eq('.nnw-overflow table tbody tr:last-child td', 'border-bottom-width', '0px'),
-	'table 内部保留 hairline 右边框': eq('.nnw-overflow table tbody tr:first-child td:first-child', 'border-right-width', '1px'),
+	// 表格跟站点一致：没有外框、没有竖线，结构由三条横向规则承担 —— 表头下
+	// 一条 --line、行间 --hair、末行收口 --line。
+	'table 无外框': eq('.nnw-overflow table', 'border-top-width', '0px'),
+	'table 单元格无竖线': eq('.nnw-overflow table tbody tr:first-child td:first-child', 'border-right-width', '0px'),
 	'table 单元格无顶边': eq('.nnw-overflow table td', 'border-top-width', '0px'),
+	'table 表头下一条 --line': eqToken('.nnw-overflow table thead th', 'border-bottom-color', '--line'),
+	'table 行间是 hairline': eqToken('.nnw-overflow table tbody tr:first-child td', 'border-bottom-color', '--hair'),
+	'table 末行收口用 --line': eqToken('.nnw-overflow table tbody tr:last-child td', 'border-bottom-color', '--line'),
+	'table 比正文小一档（0.92em）': (() => {
+		const body = parseFloat(cs('.articleBody p', 'font-size'));
+		const got = parseFloat(cs('.nnw-overflow table td', 'font-size'));
+		return { pass: Math.abs(got - body * 0.92) < 0.1, got: got + 'px', want: (body * 0.92).toFixed(1) + 'px（正文 ' + body + 'px × 0.92）' };
+	})(),
 	'嵌套 table 无外框': eq('.nnw-overflow table table', 'border-top-width', '0px'),
 	'td 内 pre 去边框': eq('.nnw-overflow td pre', 'border-top-width', '0px'),
-	'table[border=0] 无边框': eq('.nnw-overflow table[border="0"]', 'border-top-width', '0px'),
+	// border 属性是 presentational hint，落在 author 原点最前 —— 基础规则的
+	// border: 0 必须压掉它，否则老 feed 里的 border="1" 会带回 UA 的 outset 框。
+	'table[border] 的 UA 外框被压掉（0 与 1 都不带框）': (() => {
+		const got = [cs('.nnw-overflow table[border="0"]', 'border-top-width'), cs('#sp-table-border1', 'border-top-width'), cs('#sp-table-border1 td', 'border-top-width')];
+		return { pass: got.every((v) => v === '0px'), got: got.join(' / '), want: '0px / 0px / 0px' };
+	})(),
 	'.nnw-overflow 横向滚动': eq('.nnw-overflow', 'overflow-x', 'auto'),
 	'pre 横向滚动、纵向裁切': eq('.articleBody pre', 'overflow-y', 'hidden'),
 	'.articleBody code 有底色': eqToken('.articleBody code', 'background-color', '--panel'),

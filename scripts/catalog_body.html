@@ -165,8 +165,8 @@ console.log(`loaded: ${theme}`);</code></pre>
 <!-- ───────────────────────────────────────────────────────────── 表格 -->
 <h2>7 · 表格</h2>
 
-<p class="spec-line"><code>.nnw-overflow</code>（横向滚动容器，NN 的脚本会加）+ <code>table</code> <code>td</code> <code>th</code></p>
-<p class="spec-line">末列／末行的边框由 <code>:matches(td, th):last-child</code> 与 <code>:matches(thead, tbody, tfoot):last-child &gt; tr:last-child</code> 收掉 —— 这两条最容易被浏览器丢掉语法</p>
+<p class="spec-line"><code>.nnw-overflow</code>（横向滚动容器，NN 的脚本会加）+ <code>table</code> <code>td</code> <code>th</code> —— 无外框、无竖线：表头下一条 <code>--line</code>、行间 <code>--hair</code>、末行收口 <code>--line</code></p>
+<p class="spec-line">末行的收口色由 <code>:matches(thead, tbody, tfoot):last-child &gt; tr:last-child</code> 换掉 —— 这条最容易被浏览器丢掉语法</p>
 <div class="nnw-overflow">
 	<table>
 		<thead>
@@ -180,7 +180,7 @@ console.log(`loaded: ${theme}`);</code></pre>
 	</table>
 </div>
 
-<p class="spec-line"><code>.nnw-overflow table table</code> — 嵌套表格去掉外框、不被拉满；<code>.nnw-overflow .nnw-overflow</code> — 嵌套 wrapper 不加第二层间距。
+<p class="spec-line"><code>.nnw-overflow table table</code> — 嵌套表格不被拉满；<code>.nnw-overflow .nnw-overflow</code> — 嵌套 wrapper 不加第二层间距。
 下面的嵌套表格手动套了 wrapper，就是为了复现 app 里 JavaScript 包裹嵌套表格之后的 DOM 形状。</p>
 <div class="nnw-overflow">
 	<table>
@@ -191,10 +191,15 @@ console.log(`loaded: ${theme}`);</code></pre>
 	</table>
 </div>
 
-<p class="spec-line"><code>.nnw-overflow table[border="0"]</code> — 老式 <code>&lt;table border="0"&gt;</code> 去边框</p>
+<p class="spec-line"><code>table[border]</code> — 老式 <code>&lt;table border="0"&gt;</code> 与 <code>&lt;table border="1"&gt;</code> 都不带外框：presentational hint 落在 author 原点最前，基础规则的 <code>border: 0</code> 压得住它</p>
 <div class="nnw-overflow">
 	<table border="0">
-		<tr><td>border="0"</td><td>只留内层 hairline</td></tr>
+		<tr><td>border="0"</td><td>只留横向规则</td></tr>
+	</table>
+</div>
+<div class="nnw-overflow">
+	<table border="1" id="sp-table-border1">
+		<tr><td>border="1"</td><td>UA 的 outset 外框不出现</td></tr>
 	</table>
 </div>
 
@@ -286,7 +291,7 @@ console.log(`loaded: ${theme}`);</code></pre>
 		<tr><td>表格</td><td>两列短内容</td></tr>
 	</table>
 </div>
-<p id="sp-e">段落 E —— 上面这张表只有两列短内容，应该依然铺满整列宽度。</p>
+<p id="sp-e">段落 E —— 上面这张表只有两列短内容，应该依然铺满整列宽度（末行自带 <code>--line</code> 收口）。</p>
 <ul id="sp-list">
 	<li>列表项</li>
 </ul>

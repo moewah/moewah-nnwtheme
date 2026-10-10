@@ -36,20 +36,24 @@ const sizedSVGs = tailwindSVGs.filter((s) => s.style.width !== '');
 const tdPreSpans = inArticle('td > pre span');
 
 // Wrapping a table is only half of it: the theme's rules are keyed on
-// `.nnw-overflow`, so check the grid actually lands once the wrapper is there.
+// `.nnw-overflow`, so check the rules actually land once the wrapper is there.
+// The grid is rules-only: no box, no vertical rules, a hairline between rows and
+// a --line rule closing the table.
 const grid = (() => {
 	const table = document.querySelector('div.articleBody .nnw-overflow table');
 	if (!table) return { pass: false, detail: '找不到被包裹的表格' };
-	const cell = (n) => table.querySelector('tr td:nth-child(' + n + ')');
+	const cell = (n) => table.querySelector('tbody tr td:nth-child(' + n + ')');
+	const last = table.querySelector('tbody tr:last-child td:last-child');
 	const cs = (el, prop) => getComputedStyle(el).getPropertyValue(prop).trim();
 	const got = {
 		tableBorder: cs(table, 'border-top-width'),
 		innerRight: cs(cell(1), 'border-right-width'),
-		lastRight: cs(table.querySelector('tr td:last-child'), 'border-right-width'),
+		rowBottom: cs(cell(1), 'border-bottom-width'),
+		lastBottom: cs(last, 'border-bottom-width'),
 	};
 	return {
-		pass: got.tableBorder === '1px' && got.innerRight === '1px' && got.lastRight === '0px',
-		detail: '表格外框 ' + got.tableBorder + ' · 内部竖线 ' + got.innerRight + ' · 末列 ' + got.lastRight,
+		pass: got.tableBorder === '0px' && got.innerRight === '0px' && got.rowBottom === '1px' && got.lastBottom === '1px',
+		detail: '表格外框 ' + got.tableBorder + ' · 竖线 ' + got.innerRight + ' · 行间横线 ' + got.rowBottom + ' · 末行收口 ' + got.lastBottom,
 	};
 })();
 
@@ -112,7 +116,7 @@ const results = [
 	check('Tailwind 尺寸的 SVG 拿到 width', tailwindSVGs.length > 0 && sizedSVGs.length === tailwindSVGs.length,
 		sizedSVGs.length + ' / ' + tailwindSVGs.length + ' 个'),
 	check('<td><pre> 里的 span 被拆掉', tdPreSpans.length === 0, '残留 ' + tdPreSpans.length + ' 个 span'),
-	check('包裹后的表格拿到主题的网格', grid.pass, grid.detail),
+	check('包裹后的表格拿到主题的横向规则', grid.pass, grid.detail),
 	check('JS 加上的 .footnote 芯片真的取到了主题配色', chipPaint.pass, chipPaint.detail),
 	check('嵌套 .nnw-overflow 不重复加间距', nestedSpacing.pass, nestedSpacing.detail),
 ];
